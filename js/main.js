@@ -9,6 +9,10 @@ Vue.component('task-board', {
             desc: null,
             deadline: null,
             importance: null,
+            oneFilter: null,
+            twoFilter: null,
+            thrFilter: null,
+
         };
     },
     computed: {
@@ -137,7 +141,15 @@ Vue.component('task-board', {
             <div class="column">
                 <h2>Запланированные задачи</h2>
                 <div class="card-list">
-                    <div v-for="task in plannedTasksSortedByImportance" :key="task.id" class="card">
+                <label for="oneFilter">Filter by Priority:</label>
+                <select v-model="oneFilter" id="oneFilter">
+                    <option value="">Все</option>
+                    <option value="1">Низкий</option>
+                    <option value="2">Средний</option>
+                    <option value="3">Высокий</option>
+                    <option value="4">Срочный</option>
+                </select>
+                    <div v-for="task in plannedTasksSortedByImportance" v-if="!oneFilter || task.importance.number === oneFilter" :key="task.id" class="card">
                         <p v-if="!task.editMode">title - {{ task.title }}</p>
                         <input v-else type="text" v-model="task.title" placeholder="title">
                         <p v-if="!task.editMode">description - {{ task.desc }}</p>
@@ -157,7 +169,15 @@ Vue.component('task-board', {
             <div class="column">
                 <h2>Задачи в работе</h2>
                 <div class="card-list">
-                    <div v-for="task in inProgressTasksSortedByImportance" :key="task.id" class="card">
+                <label for="twoFilter">Filter by Priority:</label>
+                <select v-model="twoFilter" id="twoFilter">
+                    <option value="">Все</option>
+                    <option value="1">Низкий</option>
+                    <option value="2">Средний</option>
+                    <option value="3">Высокий</option>
+                    <option value="4">Срочный</option>
+                </select>
+                    <div v-for="task in inProgressTasksSortedByImportance" v-if="!twoFilter || task.importance.number === twoFilter" :key="task.id" class="card">
                         <p v-if="!task.editMode">title - {{ task.title }}</p>
                         <input v-else type="text" v-model="task.title" placeholder="title">
                         <p v-if="!task.editMode">description - {{ task.desc }}</p>
@@ -178,7 +198,15 @@ Vue.component('task-board', {
             <div class="column">
                 <h2>Тестирование</h2>
                 <div class="card-list">
-                    <div v-for="task in testingTasksSortedByImportance" :key="task.id" class="card">
+                <label for="thrFilter">Filter by Priority:</label>
+                <select v-model="thrFilter" id="thrFilter">
+                    <option value="">Все</option>
+                    <option value="1">Низкий</option>
+                    <option value="2">Средний</option>
+                    <option value="3">Высокий</option>
+                    <option value="4">Срочный</option>
+                </select>
+                    <div v-for="task in testingTasksSortedByImportance" v-if="!thrFilter || task.importance.number === thrFilter" :key="task.id" class="card">
                         <p v-if="!task.editMode">title - {{ task.title }}</p>
                         <input v-else type="text" v-model="task.title" placeholder="title">
                         <p v-if="!task.editMode">description - {{ task.desc }}</p>
@@ -206,10 +234,23 @@ Vue.component('task-board', {
 });
 
 Vue.component('completed-task-list', {
+    data(){
+        return{
+            forFilter: null
+        }
+    },
     props: ['tasks'],
     template: `
     <div class="card-list">
-        <div v-for="task in sortedTasks" :key="task.id" class="card" :class="{ 'expired': isTaskExpired(task) }">
+        <label for="forFilter">Filter by Priority:</label>
+        <select v-model="forFilter" id="forFilter">
+            <option value="">Все</option>
+            <option value="1">Низкий</option>
+            <option value="2">Средний</option>
+            <option value="3">Высокий</option>
+            <option value="4">Срочный</option>
+        </select>
+        <div v-for="task in sortedTasks" v-if="!forFilter || task.importance.number === forFilter" :key="task.id" class="card" :class="{ 'expired': isTaskExpired(task) }">
             <p>title - {{ task.title }}</p>
             <p>description - {{ task.desc }}</p>
             <p v-if="!task.editMode">Priority - {{ task.importance.text }}</p>
