@@ -8,7 +8,19 @@ Vue.component('task-board', {
             title: null,
             desc: null,
             deadline: null,
+            importance: null,
         };
+    },
+    computed: {
+        plannedTasksSortedByImportance() {
+            return this.plannedTasks.slice().sort((a, b) => b.importance.number - a.importance.number);
+        },
+        inProgressTasksSortedByImportance() {
+            return this.inProgressTasks.slice().sort((a, b) => b.importance.number - a.importance.number);
+        },
+        testingTasksSortedByImportance() {
+            return this.testingTasks.slice().sort((a, b) => b.importance.number - a.importance.number);
+        },
     },
     methods: {
         deleteTask(taskList, task) {
@@ -18,10 +30,26 @@ Vue.component('task-board', {
             }
         },
         editTask(task) {
-            task.editMode = !task.editMode;
+            if (!task.editMode) {
+                task.editMode = !task.editMode;
+            }
+            else if(task.editMode && task.deadline >= 0 && task.deadline != '-0'){
+                task.editMode = !task.editMode;
+            }
         },
+
         addTask() {
-            if (this.title && this.desc && this.deadline) {
+            if (this.title && this.desc && this.deadline && this.importance) {
+                let nametext 
+                if (this.importance == 1) {
+                    nametext = 'Низкий'
+                } else if (this.importance == 2) {
+                    nametext ='Средний'
+                } else if (this.importance == 3) {
+                    nametext = 'Высокий'
+                } else if (this.importance == 4) {
+                    nametext = 'Срочный'
+                }
                 const newTask = {
                     title: this.title,
                     desc: this.desc,
@@ -29,6 +57,7 @@ Vue.component('task-board', {
                     createDate: new Date(),
                     editMode: false,
                     reason: null,
+                    importance: { number: this.importance, text: nametext }
                 };
                 this.plannedTasks.push(newTask);
             }
@@ -38,6 +67,7 @@ Vue.component('task-board', {
             this.createDate = null;
             this.editMode = null;
             this.reason = null;
+            this.importance = null;
         },
 
         moveToInProgress(task) {
@@ -50,9 +80,11 @@ Vue.component('task-board', {
             this.testingTasks.push(task);
         },
         moveToDone(task) {
-            this.testingTasks = this.testingTasks.filter(t => t !== task);
-            task.completedInTime = this.isTaskCompletedInTime(task);
-            this.completedTasks.push(task);
+            if(!task.editMode){
+                this.testingTasks = this.testingTasks.filter(t => t !== task);
+                task.completedInTime = this.isTaskCompletedInTime(task);
+                this.completedTasks.push(task);
+            }
         },
         moveToBack(task) {
             const reason = prompt("enter reason");
@@ -88,6 +120,16 @@ Vue.component('task-board', {
                 <input type="number" id="deadline" v-model="deadline" placeholder="deadline" min="0">
             </p>
             <p>
+
+                <label for="priority">priority:</label>
+                <select v-model="importance" id="priority">
+                    <option value="1">Низкий</option>
+                    <option value="2">Средний</option>
+                    <option value="3">Высокий</option>
+                    <option value="4">Срочный</option>
+                </select>
+            </p>
+            <p>
                 <input type="submit" value="Submit">
             </p>
         </form>
@@ -95,13 +137,14 @@ Vue.component('task-board', {
             <div class="column">
                 <h2>Запланированные задачи</h2>
                 <div class="card-list">
-                    <div v-for="task in plannedTasks" :key="task.id" class="card">
+                    <div v-for="task in plannedTasksSortedByImportance" :key="task.id" class="card">
                         <p v-if="!task.editMode">title - {{ task.title }}</p>
                         <input v-else type="text" v-model="task.title" placeholder="title">
                         <p v-if="!task.editMode">description - {{ task.desc }}</p>
                         <input v-else type="text" v-model="task.desc" placeholder="desc">
                         <p v-if="!task.editMode">days left - {{ task.deadline }}</p>
                         <input v-else type="number" v-model="task.deadline" placeholder="deadline" min="0">
+                        <p v-if="!task.editMode">Priority - {{ task.importance.text }}</p>
 
                         <button @click="moveToInProgress(task)">Переместить работу</button>
                         <div class="customization__btns">
@@ -114,7 +157,7 @@ Vue.component('task-board', {
             <div class="column">
                 <h2>Задачи в работе</h2>
                 <div class="card-list">
-                    <div v-for="task in inProgressTasks" :key="task.id" class="card">
+                    <div v-for="task in inProgressTasksSortedByImportance" :key="task.id" class="card">
                         <p v-if="!task.editMode">title - {{ task.title }}</p>
                         <input v-else type="text" v-model="task.title" placeholder="title">
                         <p v-if="!task.editMode">description - {{ task.desc }}</p>
@@ -122,7 +165,8 @@ Vue.component('task-board', {
                         <p v-if="!task.editMode">days left - {{ task.deadline }}</p>
                         <input v-else type="number" v-model="task.deadline" placeholder="deadline" min="0">
                         <p v-if="task.reason !== null">{{ task.reason }}</p>
-
+                        <p v-if="!task.editMode">Priority - {{ task.importance.text }}</p>
+                        
                         <button @click="moveToTesting(task)">Переместить работу</button>
                         <div class="customization__btns">
                             <button @click="deleteTask(inProgressTasks, task)">Удалить</button>
@@ -134,14 +178,15 @@ Vue.component('task-board', {
             <div class="column">
                 <h2>Тестирование</h2>
                 <div class="card-list">
-                    <div v-for="task in testingTasks" :key="task.id" class="card">
+                    <div v-for="task in testingTasksSortedByImportance" :key="task.id" class="card">
                         <p v-if="!task.editMode">title - {{ task.title }}</p>
                         <input v-else type="text" v-model="task.title" placeholder="title">
                         <p v-if="!task.editMode">description - {{ task.desc }}</p>
                         <input v-else type="text" v-model="task.desc" placeholder="desc">
                         <p v-if="!task.editMode">days left - {{ task.deadline }}</p>
                         <input v-else type="number" v-model="task.deadline" placeholder="deadline" min="0">
-                    
+                        <p v-if="!task.editMode">Priority - {{ task.importance.text }}</p>
+                        
                         <button @click="moveToBack(task)">Переместить назад</button>
                         <button @click="moveToDone(task)">Переместить работу</button>
                         <div class="customization__btns">
@@ -164,14 +209,20 @@ Vue.component('completed-task-list', {
     props: ['tasks'],
     template: `
     <div class="card-list">
-        <div v-for="task in tasks" :key="task.id" class="card" :class="{ 'expired': isTaskExpired(task) }">
+        <div v-for="task in sortedTasks" :key="task.id" class="card" :class="{ 'expired': isTaskExpired(task) }">
             <p>title - {{ task.title }}</p>
             <p>description - {{ task.desc }}</p>
+            <p v-if="!task.editMode">Priority - {{ task.importance.text }}</p>
             <p v-if="isTaskExpired(task)" class="expired-message">Просрочено</p>
             <p v-else class="done-message">Не Просрочено</p>
         </div>
     </div>
     `,
+    computed: {
+        sortedTasks() {
+            return this.tasks.slice().sort((a, b) => b.importance.number - a.importance.number);
+        }
+    },
     methods: {
         isTaskExpired(task) {
             return !task.completedInTime;
