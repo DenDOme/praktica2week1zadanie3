@@ -61,6 +61,7 @@ Vue.component('task-board', {
                     createDate: new Date(),
                     editMode: false,
                     reason: null,
+                    moveTime: [],
                     importance: { number: this.importance, text: nametext }
                 };
                 this.plannedTasks.push(newTask);
@@ -76,16 +77,19 @@ Vue.component('task-board', {
 
         moveToInProgress(task) {
             this.plannedTasks = this.plannedTasks.filter(t => t !== task);
+            task.moveTime.push({text: 'moved to inprogress', date: new Date()})
             this.inProgressTasks.push(task);
         },
         moveToTesting(task) {
             this.inProgressTasks = this.inProgressTasks.filter(t => t !== task);
+            task.moveTime.push({text: 'moved to testing', date: new Date()})
             task.reason = null;
             this.testingTasks.push(task);
         },
         moveToDone(task) {
             if(!task.editMode){
                 this.testingTasks = this.testingTasks.filter(t => t !== task);
+                task.moveTime.push({text: 'moved to done', date: new Date()})
                 task.completedInTime = this.isTaskCompletedInTime(task);
                 this.completedTasks.push(task);
             }
@@ -95,6 +99,7 @@ Vue.component('task-board', {
             if (reason) {
                 this.testingTasks = this.testingTasks.filter(t => t !== task);
                 task.reason = reason;
+                task.moveTime.push({text: 'moved to back', date: new Date()})
                 this.inProgressTasks.push(task);
             }
         },
@@ -158,6 +163,11 @@ Vue.component('task-board', {
                         <input v-else type="number" v-model="task.deadline" placeholder="deadline" min="0">
                         <p v-if="!task.editMode">Priority - {{ task.importance.text }}</p>
 
+                        <div v-for="date in task.moveTime">
+                            <p>{{ date.text}}</p>
+                            <p>{{ date.date}}</p>
+                        </div>
+
                         <button @click="moveToInProgress(task)">Переместить работу</button>
                         <div class="customization__btns">
                             <button @click="deleteTask(plannedTasks, task)">Удалить</button>
@@ -187,6 +197,11 @@ Vue.component('task-board', {
                         <p v-if="task.reason !== null">{{ task.reason }}</p>
                         <p v-if="!task.editMode">Priority - {{ task.importance.text }}</p>
                         
+                        <div v-for="date in task.moveTime">
+                            <p>{{ date.text}}</p>
+                            <p>{{ date.date}}</p>
+                        </div>
+
                         <button @click="moveToTesting(task)">Переместить работу</button>
                         <div class="customization__btns">
                             <button @click="deleteTask(inProgressTasks, task)">Удалить</button>
@@ -215,6 +230,11 @@ Vue.component('task-board', {
                         <input v-else type="number" v-model="task.deadline" placeholder="deadline" min="0">
                         <p v-if="!task.editMode">Priority - {{ task.importance.text }}</p>
                         
+                        <div v-for="date in task.moveTime">
+                            <p>{{ date.text}}</p>
+                            <p>{{ date.date}}</p>
+                        </div>
+
                         <button @click="moveToBack(task)">Переместить назад</button>
                         <button @click="moveToDone(task)">Переместить работу</button>
                         <div class="customization__btns">
@@ -256,6 +276,10 @@ Vue.component('completed-task-list', {
             <p v-if="!task.editMode">Priority - {{ task.importance.text }}</p>
             <p v-if="isTaskExpired(task)" class="expired-message">Просрочено</p>
             <p v-else class="done-message">Не Просрочено</p>
+            <div v-for="date in task.moveTime">
+                <p>{{ date.text}}</p>
+                <p>{{ date.date}}</p>
+            </div>
         </div>
     </div>
     `,
